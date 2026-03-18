@@ -109,7 +109,7 @@ function LoginScreen() {
         <form onSubmit={handleAuth} className="space-y-4">
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-1.5">Email Address</label>
-            <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors" placeholder="admin@transport.gov.mv" />
+            <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-900 font-medium placeholder-gray-400 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors" placeholder="admin@transport.gov.mv" />
           </div>
 
           {mode === 'login' && (
@@ -118,7 +118,7 @@ function LoginScreen() {
                 <label className="block text-xs font-medium text-gray-700">Password</label>
                 <button type="button" onClick={() => setMode('reset')} className="text-xs text-gray-500 hover:text-black font-medium transition-colors">Forgot password?</button>
               </div>
-              <input required type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors" placeholder="••••••••" />
+              <input required type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-900 font-medium placeholder-gray-400 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors" placeholder="••••••••" />
             </div>
           )}
 
@@ -144,7 +144,7 @@ function AdminDashboard({ session }: { session: any }) {
   const [permits, setPermits] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isUserModalOpen, setIsUserModalOpen] = useState(false); // New Admin Creation Modal
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState({ isVisible: false, message: '', type: 'success' });
@@ -390,35 +390,35 @@ function AdminDashboard({ session }: { session: any }) {
               <form onSubmit={handleCreatePermit} className="flex-1 overflow-y-auto p-6 space-y-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1.5">Permit Number</label>
-                  <input required name="permit_number" value={formData.permit_number} onChange={handleInputChange} className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-black focus:ring-1 focus:ring-black" placeholder="TA-T(L)2026/0060" />
+                  <input required name="permit_number" value={formData.permit_number} onChange={handleInputChange} className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 font-medium focus:outline-none focus:border-black focus:ring-1 focus:ring-black" placeholder="TA-T(L)2026/0060" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1.5">Owner Name</label>
-                  <input required name="owner_name" value={formData.owner_name} onChange={handleInputChange} className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-black focus:ring-1 focus:ring-black" placeholder="HASSAAN KHALIDH" />
+                  <input required name="owner_name" value={formData.owner_name} onChange={handleInputChange} className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 font-medium focus:outline-none focus:border-black focus:ring-1 focus:ring-black" placeholder="HASSAAN KHALIDH" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1.5">Chassis No.</label>
-                    <input required name="chassis_number" value={formData.chassis_number} onChange={handleInputChange} className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-black focus:ring-1 focus:ring-black" />
+                    <input required name="chassis_number" value={formData.chassis_number} onChange={handleInputChange} className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 font-medium focus:outline-none focus:border-black focus:ring-1 focus:ring-black" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1.5">Engine No.</label>
-                    <input required name="engine_number" value={formData.engine_number} onChange={handleInputChange} className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-black focus:ring-1 focus:ring-black" />
+                    <input required name="engine_number" value={formData.engine_number} onChange={handleInputChange} className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 font-medium focus:outline-none focus:border-black focus:ring-1 focus:ring-black" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1.5">Issue Date</label>
-                    <input type="date" required name="issue_date" value={formData.issue_date} onChange={handleInputChange} className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-black focus:ring-1 focus:ring-black" />
+                    <input type="date" required name="issue_date" value={formData.issue_date} onChange={handleInputChange} className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 font-medium focus:outline-none focus:border-black focus:ring-1 focus:ring-black" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1.5">Due Date</label>
-                    <input type="date" required name="due_date" value={formData.due_date} onChange={handleInputChange} className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-black focus:ring-1 focus:ring-black" />
+                    <input type="date" required name="due_date" value={formData.due_date} onChange={handleInputChange} className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 font-medium focus:outline-none focus:border-black focus:ring-1 focus:ring-black" />
                   </div>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1.5">Status</label>
-                  <select name="status" value={formData.status} onChange={handleInputChange} className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-black focus:ring-1 focus:ring-black">
+                  <select name="status" value={formData.status} onChange={handleInputChange} className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 font-medium focus:outline-none focus:border-black focus:ring-1 focus:ring-black">
                     <option value="Valid">Valid</option>
                     <option value="Expired">Expired</option>
                     <option value="Revoked">Revoked</option>
@@ -450,11 +450,11 @@ function AdminDashboard({ session }: { session: any }) {
               <form onSubmit={handleCreateAdmin} className="flex-1 overflow-y-auto p-6 space-y-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1.5">Staff Email Address</label>
-                  <input required type="email" value={newUserEmail} onChange={(e) => setNewUserEmail(e.target.value)} className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-black focus:ring-1 focus:ring-black" placeholder="staff@transport.gov.mv" />
+                  <input required type="email" value={newUserEmail} onChange={(e) => setNewUserEmail(e.target.value)} className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 font-medium focus:outline-none focus:border-black focus:ring-1 focus:ring-black" placeholder="staff@transport.gov.mv" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1.5">Temporary Password</label>
-                  <input required type="password" value={newUserPassword} onChange={(e) => setNewUserPassword(e.target.value)} className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-black focus:ring-1 focus:ring-black" placeholder="••••••••" minLength={6} />
+                  <input required type="password" value={newUserPassword} onChange={(e) => setNewUserPassword(e.target.value)} className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 font-medium focus:outline-none focus:border-black focus:ring-1 focus:ring-black" placeholder="••••••••" minLength={6} />
                 </div>
 
                 <div className="pt-6">
