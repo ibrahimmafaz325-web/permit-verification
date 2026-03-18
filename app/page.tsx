@@ -2,8 +2,29 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { PDFDocument, rgb } from 'pdf-lib';
+import { PDFDocument } from 'pdf-lib';
 import QRCode from 'qrcode';
+// Import our new secure server actions
+import { fetchAdminUsers, deleteAdminUser, updateAdminPassword } from './actions';
+
+// Helper function to translate YYYY-MM-DD into Dhivehi format
+const formatDhivehiDate = (dateString: string) => {
+  if (!dateString) return '';
+  const parts = dateString.split('-');
+  if (parts.length !== 3) return dateString; 
+  
+  const year = parts[0];
+  const monthIndex = parseInt(parts[1], 10) - 1;
+  const day = parseInt(parts[2], 10);
+  
+  const months = [
+    "ޖެނުއަރީ", "ފެބްރުއަރީ", "މާރޗް", "އޭޕްރީލް",
+    "މޭ", "ޖޫން", "ޖުލައި", "އޮގަސްޓް",
+    "ސެޕްޓެމްބަރ", "އޮކްޓޯބަރ", "ނޮވެމްބަރ", "ޑިސެމްބަރ"
+  ];
+  
+  return `${day} ${months[monthIndex]} ${year}`;
+};
 
 // Sleek Toast Notification
 const Toast = ({ message, type, isVisible, onClose }: any) => {
@@ -18,18 +39,15 @@ const Toast = ({ message, type, isVisible, onClose }: any) => {
 };
 
 export default function App() {
-  // Auth State
   const [session, setSession] = useState<any>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
 
   useEffect(() => {
-    // Check active session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setIsAuthLoading(false);
     });
 
-    // Listen for auth changes (login/logout)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
     });
@@ -45,12 +63,10 @@ export default function App() {
     );
   }
 
-  // Show Login Screen if not authenticated
   if (!session) {
     return <LoginScreen />;
   }
 
-  // Show Admin Dashboard if authenticated
   return <AdminDashboard session={session} />;
 }
 
@@ -143,16 +159,27 @@ function LoginScreen() {
 function AdminDashboard({ session }: { session: any }) {
   const [permits, setPermits] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Modal States
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState({ isVisible: false, message: '', type: 'success' });
 
+  // Admin User Management State
+  const [adminList, setAdminList] = useState<any[]>([]);
+  const [isLoadingAdmins, setIsLoadingAdmins] = useState(false);
+
+  // Edit State
+  const [editingId, setEditingId] = useState<string | null>(null);
+
   // Permit Form State
-  const [formData, setFormData] = useState({
+  const emptyForm = {
     permit_number: '', owner_name: '', chassis_number: '', engine_number: '', issue_date: '', due_date: '', status: 'Valid'
-  });
+  };
+  const [formData, setFormData] = useState(emptyForm);
 
   // New User Form State
   const [newUserEmail, setNewUserEmail] = useState('');
@@ -167,6 +194,24 @@ function AdminDashboard({ session }: { session: any }) {
     fetchPermits();
   }, []);
 
+  // Fetch Admins whenever the Manage Admins modal opens
+  useEffect(() => {
+    if (isUserModalOpen) {
+      loadAdminUsers();
+    }
+  }, [isUserModalOpen]);
+
+  const loadAdminUsers = async () => {
+    setIsLoadingAdmins(true);
+    try {
+      const users = await fetchAdminUsers();
+      setAdminList(users);
+    } catch (err: any) {
+      showToast(err.message, 'error');
+    }
+    setIsLoadingAdmins(false);
+  };
+
   const fetchPermits = async () => {
     setIsLoading(true);
     const { data, error } = await supabase.from('permits').select('*').order('created_at', { ascending: false });
@@ -179,17 +224,47 @@ function AdminDashboard({ session }: { session: any }) {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleCreatePermit = async (e: React.FormEvent) => {
+  const openNewPermitModal = () => {
+    setFormData(emptyForm);
+    setEditingId(null);
+    setIsCreateModalOpen(true);
+  };
+
+  const openEditPermitModal = (permit: any) => {
+    setFormData({
+      permit_number: permit.permit_number,
+      owner_name: permit.owner_name,
+      chassis_number: permit.chassis_number,
+      engine_number: permit.engine_number,
+      issue_date: permit.issue_date,
+      due_date: permit.due_date,
+      status: permit.status
+    });
+    setEditingId(permit.id);
+    setIsCreateModalOpen(true);
+  };
+
+  const handleSavePermit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    const { error } = await supabase.from('permits').insert([formData]);
+    let error;
+
+    if (editingId) {
+      const { error: updateError } = await supabase.from('permits').update(formData).eq('id', editingId);
+      error = updateError;
+    } else {
+      const { error: insertError } = await supabase.from('permits').insert([formData]);
+      error = insertError;
+    }
+    
     setIsSubmitting(false);
 
     if (error) {
       showToast(error.message, 'error');
     } else {
-      showToast('Permit issued successfully.', 'success');
-      setFormData({ permit_number: '', owner_name: '', chassis_number: '', engine_number: '', issue_date: '', due_date: '', status: 'Valid' });
+      showToast(editingId ? 'Permit updated successfully.' : 'Permit issued successfully.', 'success');
+      setFormData(emptyForm);
+      setEditingId(null);
       setIsCreateModalOpen(false);
       fetchPermits();
     }
@@ -198,7 +273,6 @@ function AdminDashboard({ session }: { session: any }) {
   const handleCreateAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    // Creates a new user in Supabase Auth
     const { error } = await supabase.auth.signUp({
       email: newUserEmail,
       password: newUserPassword,
@@ -208,11 +282,43 @@ function AdminDashboard({ session }: { session: any }) {
     if (error) {
       showToast(error.message, 'error');
     } else {
-      showToast('Admin account created successfully! Check email for confirmation.', 'success');
+      showToast('Admin account created successfully!', 'success');
       setNewUserEmail('');
       setNewUserPassword('');
-      setIsUserModalOpen(false);
+      loadAdminUsers(); // Refresh the list
     }
+  };
+
+  // Secure Delete Admin
+  const handleDeleteAdmin = async (userId: string) => {
+    if (!window.confirm("Are you sure you want to permanently delete this user? They will lose all access immediately.")) return;
+    setIsSubmitting(true);
+    try {
+      await deleteAdminUser(userId);
+      showToast('User deleted successfully.', 'success');
+      loadAdminUsers();
+    } catch (err: any) {
+      showToast(err.message, 'error');
+    }
+    setIsSubmitting(false);
+  };
+
+  // Secure Change Password
+  const handleChangePassword = async (userId: string) => {
+    const newPass = window.prompt("Enter new password for this user (minimum 6 characters):");
+    if (!newPass) return;
+    if (newPass.length < 6) {
+      showToast('Password must be at least 6 characters.', 'error');
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      await updateAdminPassword(userId, newPass);
+      showToast('Password updated successfully.', 'success');
+    } catch (err: any) {
+      showToast(err.message, 'error');
+    }
+    setIsSubmitting(false);
   };
 
   const handleSignOut = async () => {
@@ -295,7 +401,7 @@ function AdminDashboard({ session }: { session: any }) {
           <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Transport & Civil Aviation</h2>
           <div className="flex items-center gap-4">
             <span className="text-sm font-medium text-gray-600">{session.user.email}</span>
-            <button onClick={() => setIsCreateModalOpen(true)} className="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm">
+            <button onClick={openNewPermitModal} className="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm">
               + Issue Permit
             </button>
           </div>
@@ -305,7 +411,7 @@ function AdminDashboard({ session }: { session: any }) {
           
           <div className="md:hidden mb-6 flex justify-between items-center">
             <h2 className="text-2xl font-bold tracking-tight">Overview</h2>
-            <button onClick={() => setIsCreateModalOpen(true)} className="bg-black text-white p-2 rounded-full shadow-md">
+            <button onClick={openNewPermitModal} className="bg-black text-white p-2 rounded-full shadow-md">
                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
             </button>
           </div>
@@ -349,6 +455,7 @@ function AdminDashboard({ session }: { session: any }) {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => openEditPermitModal(permit)} className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md font-medium text-xs transition-colors">Edit</button>
                         <button onClick={() => handleDownloadPDF(permit)} className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md font-medium text-xs transition-colors">PDF</button>
                         <a href={`/verify?verify=${permit.permit_number}`} target="_blank" className="px-3 py-1.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-md font-medium text-xs transition-colors">Verify</a>
                       </div>
@@ -368,26 +475,29 @@ function AdminDashboard({ session }: { session: any }) {
                   <div className={`w-2 h-2 mt-1.5 rounded-full ${permit.status === 'Valid' ? 'bg-green-500' : 'bg-red-500'}`}></div>
                 </div>
                 <div className="text-sm text-gray-600 mb-4">{permit.owner_name} <span className="text-gray-400 block text-xs mt-0.5">{permit.chassis_number}</span></div>
-                <div className="flex gap-2">
-                  <button onClick={() => handleDownloadPDF(permit)} className="flex-1 bg-gray-100 text-gray-800 py-2 rounded-lg font-medium text-xs">Download PDF</button>
-                  <a href={`/verify?verify=${permit.permit_number}`} target="_blank" className="flex-1 bg-white border border-gray-300 text-gray-800 py-2 rounded-lg font-medium text-xs text-center">Verify Link</a>
+                <div className="flex gap-2 mb-2">
+                  <button onClick={() => openEditPermitModal(permit)} className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 py-2 rounded-lg font-medium text-xs transition-colors">Edit</button>
+                  <button onClick={() => handleDownloadPDF(permit)} className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 py-2 rounded-lg font-medium text-xs transition-colors">PDF</button>
                 </div>
+                <a href={`/verify?verify=${permit.permit_number}`} target="_blank" className="block w-full bg-white border border-gray-300 text-gray-800 py-2 rounded-lg font-medium text-xs text-center">Open Verification Page</a>
               </div>
             ))}
           </div>
 
         </div>
 
-        {/* ISSUE PERMIT MODAL */}
+        {/* CREATE / EDIT PERMIT MODAL */}
         {isCreateModalOpen && (
           <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-[100] p-0 sm:p-4">
             <div className="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-slide-up">
               <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-white">
-                <h3 className="font-semibold text-gray-900">New Import Permit</h3>
+                <h3 className="font-semibold text-gray-900">
+                  {editingId ? 'Edit Permit' : 'New Import Permit'}
+                </h3>
                 <button onClick={() => setIsCreateModalOpen(false)} className="text-gray-400 hover:text-gray-900">✕</button>
               </div>
               
-              <form onSubmit={handleCreatePermit} className="flex-1 overflow-y-auto p-6 space-y-4">
+              <form onSubmit={handleSavePermit} className="flex-1 overflow-y-auto p-6 space-y-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1.5">Permit Number</label>
                   <input required name="permit_number" value={formData.permit_number} onChange={handleInputChange} className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 font-medium focus:outline-none focus:border-black focus:ring-1 focus:ring-black" placeholder="TA-T(L)2026/0060" />
@@ -427,7 +537,7 @@ function AdminDashboard({ session }: { session: any }) {
 
                 <div className="pt-6">
                   <button type="submit" disabled={isSubmitting} className="w-full bg-black hover:bg-gray-800 text-white py-2.5 rounded-lg font-medium text-sm transition-colors disabled:opacity-50">
-                    {isSubmitting ? 'Saving to Database...' : 'Save Permit'}
+                    {isSubmitting ? 'Saving...' : (editingId ? 'Update Permit' : 'Save Permit')}
                   </button>
                 </div>
               </form>
@@ -435,34 +545,71 @@ function AdminDashboard({ session }: { session: any }) {
           </div>
         )}
 
-        {/* CREATE ADMIN MODAL */}
+        {/* MANAGE ADMINS MODAL */}
         {isUserModalOpen && (
           <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-[100] p-0 sm:p-4">
-            <div className="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-slide-up">
+            <div className="bg-white w-full sm:max-w-2xl rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-slide-up">
               <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-white">
                 <div>
-                  <h3 className="font-semibold text-gray-900">Create Admin Account</h3>
-                  <p className="text-xs text-gray-500 mt-0.5">They will receive an email to confirm.</p>
+                  <h3 className="font-semibold text-gray-900">Manage Admins</h3>
+                  <p className="text-xs text-gray-500 mt-0.5">Add, edit, or remove access to the system.</p>
                 </div>
                 <button onClick={() => setIsUserModalOpen(false)} className="text-gray-400 hover:text-gray-900">✕</button>
               </div>
               
-              <form onSubmit={handleCreateAdmin} className="flex-1 overflow-y-auto p-6 space-y-4">
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1.5">Staff Email Address</label>
-                  <input required type="email" value={newUserEmail} onChange={(e) => setNewUserEmail(e.target.value)} className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 font-medium focus:outline-none focus:border-black focus:ring-1 focus:ring-black" placeholder="staff@transport.gov.mv" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1.5">Temporary Password</label>
-                  <input required type="password" value={newUserPassword} onChange={(e) => setNewUserPassword(e.target.value)} className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 font-medium focus:outline-none focus:border-black focus:ring-1 focus:ring-black" placeholder="••••••••" minLength={6} />
-                </div>
+              <div className="flex-1 overflow-y-auto p-6">
+                {/* Add New Admin Form */}
+                <form onSubmit={handleCreateAdmin} className="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-6">
+                  <h4 className="text-xs font-bold text-gray-600 uppercase tracking-wider mb-3">Add New Admin</h4>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <input required type="email" value={newUserEmail} onChange={(e) => setNewUserEmail(e.target.value)} className="flex-1 bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-black focus:ring-1 focus:ring-black" placeholder="staff@transport.gov.mv" />
+                    <input required type="password" value={newUserPassword} onChange={(e) => setNewUserPassword(e.target.value)} className="flex-1 bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-black focus:ring-1 focus:ring-black" placeholder="Temp Password (min 6)" minLength={6} />
+                    <button type="submit" disabled={isSubmitting} className="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors disabled:opacity-50 whitespace-nowrap">
+                      {isSubmitting ? 'Adding...' : 'Add'}
+                    </button>
+                  </div>
+                </form>
 
-                <div className="pt-6">
-                  <button type="submit" disabled={isSubmitting} className="w-full bg-black hover:bg-gray-800 text-white py-2.5 rounded-lg font-medium text-sm transition-colors disabled:opacity-50">
-                    {isSubmitting ? 'Creating...' : 'Create Account'}
-                  </button>
+                {/* Admin List Table */}
+                <h4 className="text-xs font-bold text-gray-600 uppercase tracking-wider mb-3">Active Admins</h4>
+                <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                  {isLoadingAdmins ? (
+                    <div className="p-8 text-center text-sm text-gray-500">Loading users...</div>
+                  ) : (
+                    <table className="w-full text-left">
+                      <thead className="bg-gray-50 border-b border-gray-200 text-xs text-gray-500">
+                        <tr>
+                          <th className="px-4 py-3 font-medium">Email</th>
+                          <th className="px-4 py-3 font-medium hidden sm:table-cell">Created</th>
+                          <th className="px-4 py-3 font-medium text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 text-sm">
+                        {adminList.map((admin) => {
+                          const isCurrentUser = session?.user?.id === admin.id;
+                          return (
+                            <tr key={admin.id} className="hover:bg-gray-50 transition-colors">
+                              <td className="px-4 py-3 font-medium text-gray-900 flex items-center gap-2">
+                                {admin.email}
+                                {isCurrentUser && <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">You</span>}
+                              </td>
+                              <td className="px-4 py-3 text-gray-500 hidden sm:table-cell">{admin.created_at}</td>
+                              <td className="px-4 py-3 text-right">
+                                <div className="flex justify-end gap-2">
+                                  <button onClick={() => handleChangePassword(admin.id)} className="text-xs font-medium text-gray-600 hover:text-black">Edit Password</button>
+                                  {!isCurrentUser && (
+                                    <button onClick={() => handleDeleteAdmin(admin.id)} className="text-xs font-medium text-red-600 hover:text-red-800 ml-2">Delete</button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  )}
                 </div>
-              </form>
+              </div>
             </div>
           </div>
         )}
