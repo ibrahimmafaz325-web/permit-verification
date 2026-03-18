@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import jsPDF from 'jspdf';
+import QRCode from 'qrcode';
 
 export default function AdminDashboard() {
   const [permits, setPermits] = useState<any[]>([]);
@@ -76,6 +78,103 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleDownloadPDF = async (permit: any) => {
+    try {
+      // 1. Generate the verification URL based on the current domain
+      const verifyUrl = `${window.location.origin}/verify?verify=${encodeURIComponent(permit.permit_number)}`;
+      
+      // 2. Generate the QR Code as a Data URI (Base64 Image)
+      const qrCodeDataUrl = await QRCode.toDataURL(verifyUrl, {
+        width: 200,
+        margin: 1,
+        color: {
+          dark: '#000000',
+          light: '#ffffff',
+        },
+      });
+
+      // 3. Initialize the PDF document (A4 size)
+      const doc = new jsPDF();
+
+      // 4. Draw Header
+      doc.setFontSize(20);
+      doc.setTextColor(40, 53, 147); // Brand Blue (#283593)
+      doc.text('Ministry of Transport & Civil Aviation', 105, 20, { align: 'center' });
+      
+      doc.setFontSize(16);
+      doc.setTextColor(0, 0, 0);
+      doc.text('Vehicle Import Permit', 105, 30, { align: 'center' });
+      
+      // Add a separator line
+      doc.setLineWidth(0.5);
+      doc.line(20, 35, 190, 35);
+
+      // 5. Draw Permit Details
+      doc.setFontSize(12);
+      doc.setTextColor(100, 100, 100);
+      doc.text('Permit Number:', 20, 50);
+      doc.setTextColor(0, 0, 0);
+      doc.setFont('helvetica', 'bold');
+      doc.text(String(permit.permit_number), 60, 50);
+      
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 100, 100);
+      doc.text('Owner Name:', 20, 60);
+      doc.setTextColor(0, 0, 0);
+      doc.setFont('helvetica', 'bold');
+      doc.text(String(permit.owner_name), 60, 60);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 100, 100);
+      doc.text('Chassis No:', 20, 70);
+      doc.setTextColor(0, 0, 0);
+      doc.setFont('helvetica', 'bold');
+      doc.text(String(permit.chassis_number), 60, 70);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 100, 100);
+      doc.text('Engine No:', 20, 80);
+      doc.setTextColor(0, 0, 0);
+      doc.setFont('helvetica', 'bold');
+      doc.text(String(permit.engine_number), 60, 80);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 100, 100);
+      doc.text('Issue Date:', 20, 90);
+      doc.setTextColor(0, 0, 0);
+      doc.text(String(permit.issue_date), 60, 90);
+
+      doc.setTextColor(100, 100, 100);
+      doc.text('Due Date:', 20, 100);
+      doc.setTextColor(0, 0, 0);
+      doc.text(String(permit.due_date), 60, 100);
+
+      doc.setTextColor(100, 100, 100);
+      doc.text('Status:', 20, 110);
+      doc.setTextColor(permit.status === 'Valid' ? 25 : 220, permit.status === 'Valid' ? 135 : 53, permit.status === 'Valid' ? 84 : 69);
+      doc.setFont('helvetica', 'bold');
+      doc.text(String(permit.status), 60, 110);
+
+      // 6. Draw QR Code Image on the right side
+      doc.addImage(qrCodeDataUrl, 'PNG', 130, 45, 50, 50);
+      
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(150, 150, 150);
+      doc.text('Scan to Verify Authenticity', 155, 98, { align: 'center' });
+
+      // 7. Save and trigger download
+      doc.save(`Permit_${permit.permit_number}.pdf`);
+    } catch (err) {
+      console.error('Error generating PDF:', err);
+      alert('Failed to generate PDF. Please try again.');
+    }
+  };
+
+  const handleNotImplemented = (actionName: string) => {
+    alert(`${actionName} feature will be implemented soon!`);
+  };
+
   // Calculate stats
   const totalPermits = permits.length;
   const validPermits = permits.filter(p => p.status === 'Valid').length;
@@ -104,7 +203,7 @@ export default function AdminDashboard() {
           </button>
         </nav>
         <div className="p-4 border-t border-gray-800">
-          <button className="flex items-center w-full px-4 py-2 text-gray-400 hover:text-white transition-colors">
+          <button onClick={() => handleNotImplemented('Logout')} className="flex items-center w-full px-4 py-2 text-gray-400 hover:text-white transition-colors">
             <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
             Logout
           </button>
@@ -117,7 +216,7 @@ export default function AdminDashboard() {
         {/* Top Navbar */}
         <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 shadow-sm">
           <h2 className="text-xl font-semibold text-gray-800">Ministry of Transport & Civil Aviation</h2>
-          <div className="flex items-center gap-3 cursor-pointer">
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => handleNotImplemented('User Profile')}>
             <div className="w-8 h-8 rounded-full bg-[#253282] text-white flex items-center justify-center font-bold text-sm">
               A
             </div>
@@ -201,8 +300,11 @@ export default function AdminDashboard() {
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <a href={`/verify?verify=${permit.permit_number}`} target="_blank" rel="noreferrer" className="text-[#253282] hover:text-[#1c2665] font-medium">
-                            Verify Page
+                          <button onClick={() => handleDownloadPDF(permit)} className="text-[#253282] hover:text-[#1c2665] font-medium mr-4">
+                            Download PDF
+                          </button>
+                          <a href={`/verify?verify=${permit.permit_number}`} target="_blank" rel="noreferrer" className="text-gray-500 hover:text-gray-700 font-medium">
+                            View Live
                           </a>
                         </td>
                       </tr>
