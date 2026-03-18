@@ -1,6 +1,65 @@
-import React from 'react';
+"use client";
 
-export default function VerificationPortal() {
+import React, { useEffect, useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
+
+// Helper function to translate YYYY-MM-DD into Dhivehi format
+const formatDhivehiDate = (dateString: string) => {
+  if (!dateString) return '';
+  const parts = dateString.split('-');
+  if (parts.length !== 3) return dateString; // Returns original if format is unexpected
+  
+  const year = parts[0];
+  const monthIndex = parseInt(parts[1], 10) - 1;
+  const day = parseInt(parts[2], 10);
+  
+  const months = [
+    "ޖެނުއަރީ", "ފެބްރުއަރީ", "މާރޗް", "އޭޕްރީލް",
+    "މޭ", "ޖޫން", "ޖުލައި", "އޮގަސްޓް",
+    "ސެޕްޓެމްބަރ", "އޮކްޓޯބަރ", "ނޮވެމްބަރ", "ޑިސެމްބަރ"
+  ];
+  
+  return `${day} ${months[monthIndex]} ${year}`;
+};
+
+function VerificationContent() {
+  const searchParams = useSearchParams();
+  const permitNumber = searchParams.get('verify');
+  
+  const [permit, setPermit] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
+
+  useEffect(() => {
+    if (permitNumber) {
+      fetchPermit(permitNumber);
+    } else {
+      setIsError(true);
+      setIsLoading(false);
+    }
+  }, [permitNumber]);
+
+  const fetchPermit = async (numberToVerify: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('permits')
+        .select('*')
+        .eq('permit_number', numberToVerify)
+        .single();
+
+      if (error || !data) {
+        setIsError(true);
+      } else {
+        setPermit(data);
+      }
+    } catch (err) {
+      setIsError(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     // Applied the exact background color, repeating SVG wave pattern, text-shadow, and inner box-shadow from the source CSS
     <div 
@@ -12,10 +71,9 @@ export default function VerificationPortal() {
         boxShadow: 'inset 0 0 5rem rgba(0, 0, 0, .5)' 
       }}
     >
-      {/* 1:1 Bootstrap's "cover-container d-flex w-100 h-100 p-3 mx-auto flex-column" */}
       <div className="flex flex-col w-full min-h-screen p-[1rem] mx-auto max-w-[62em]">
         
-        {/* Header - "mb-auto text-center" */}
+        {/* Header */}
         <header className="mb-auto text-center">
           <div className="mx-[3rem] pb-[1rem] flex flex-col md:flex-row justify-between items-center">
             <a className="text-white text-decoration-none" href="/">
@@ -27,11 +85,10 @@ export default function VerificationPortal() {
           </div>
         </header>
 
-        {/* Main Content - "px-3" */}
+        {/* Main Content */}
         <main className="px-[1rem] w-full mt-[3rem]">
           
           <div className="text-center flex justify-center">
-            {/* Loading emblem natively from the Next.js public folder */}
             <img 
               src="/emblem.svg" 
               alt="Maldives National Emblem" 
@@ -39,70 +96,95 @@ export default function VerificationPortal() {
             />
           </div>
           
-          {/* Titles - "text-center" */}
           <div className="text-center">
             <h5 className="text-[1.25rem] font-medium leading-[1.2] mt-0 mb-[0.5rem] text-white">Ministry of Transport and Civil Aviation</h5>
             <h4 className="text-[1.5rem] font-medium leading-[1.2] mt-0 mb-[0.5rem] text-white">Vehicle Import Permit</h4>
           </div>
 
-          {/* Results Card - "card shadow-lg" */}
-          <div className="bg-[#212529] rounded-[0.375rem] border border-[rgba(255,255,255,0.125)] flex flex-col min-w-0 break-words bg-clip-border shadow-[0_1rem_3rem_rgba(0,0,0,0.175)] mt-[1rem] mb-[1rem]">
-            
-            {/* Card Header - "card-header bg-success text-white" */}
-            <div className="py-[0.5rem] px-[1rem] mb-0 bg-[#198754] border-b border-[rgba(255,255,255,0.125)] text-white rounded-t-[calc(0.375rem-1px)]">
-              <h2 className="text-[1.25rem] font-medium leading-[1.2] mb-0">Verification Results</h2>
+          {/* Conditional Rendering Based on Database Results */}
+          {isLoading ? (
+            <div className="text-center mt-8">
+              <p className="text-lg text-[rgba(255,255,255,0.7)] animate-pulse">Connecting to secure database...</p>
             </div>
-            
-            {/* Card Body - "card-body p-4" */}
-            <div className="flex-auto p-[1.5rem]">
-
-              {/* Alert - "alert alert-success d-flex align-items-center" */}
-              <div className="relative p-[1rem] mb-[1rem] border border-solid border-[#0f5132] rounded-[0.375rem] bg-[#051b11] text-[#75b798] flex items-center" role="alert">
-                <svg className="w-[1.5rem] h-[1.5rem] fill-current flex-shrink-0 mr-[0.5rem]" viewBox="0 0 16 16">
-                  <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z" />
-                </svg>
-                <div>
-                  <strong className="font-bold text-white">Document Verified!</strong> This document is authentic and valid.
+          ) : isError || !permit ? (
+            <div className="bg-[#212529] rounded-[0.375rem] border border-[rgba(255,255,255,0.125)] flex flex-col min-w-0 break-words bg-clip-border shadow-[0_1rem_3rem_rgba(0,0,0,0.175)] mt-[1rem] mb-[1rem]">
+              <div className="py-[0.5rem] px-[1rem] mb-0 bg-[#dc3545] border-b border-[rgba(255,255,255,0.125)] text-white rounded-t-[calc(0.375rem-1px)]">
+                <h2 className="text-[1.25rem] font-medium leading-[1.2] mb-0">Verification Failed</h2>
+              </div>
+              <div className="flex-auto p-[1.5rem]">
+                <div className="relative p-[1rem] mb-[1rem] border border-solid border-[#842029] rounded-[0.375rem] bg-[#2c0b0e] text-[#ea868f] flex items-center" role="alert">
+                  <svg className="w-[1.5rem] h-[1.5rem] fill-current flex-shrink-0 mr-[0.5rem]" viewBox="0 0 16 16">
+                    <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z" />
+                  </svg>
+                  <div>
+                    <strong className="font-bold text-white">Invalid Permit!</strong> This document could not be found in our database.
+                  </div>
                 </div>
               </div>
-
-              <h3 className="text-[1rem] font-medium leading-[1.2] mt-[1.5rem] mb-[1rem] text-white">Document Details:</h3>
-              
-              {/* Description List - "dl row" matching Bootstrap grid mapping */}
-              <dl className="flex flex-wrap mt-0 mb-[1rem]">
-                <dt className="w-full sm:flex-[0_0_auto] sm:w-[33.33333333%] font-bold text-white">Permit Number:</dt>
-                <dd className="w-full sm:flex-[0_0_auto] sm:w-[66.66666667%] mb-[0.5rem] text-[#dee2e6]">TA-T(L)2026/0060</dd>
-
-                <dt className="w-full sm:flex-[0_0_auto] sm:w-[33.33333333%] font-bold text-white">Owner Name:</dt>
-                <dd className="w-full sm:flex-[0_0_auto] sm:w-[66.66666667%] mb-[0.5rem] text-[#dee2e6]">HASSAAN KHALIDH</dd>
-
-                <dt className="w-full sm:flex-[0_0_auto] sm:w-[33.33333333%] font-bold text-white">Chassis Number:</dt>
-                <dd className="w-full sm:flex-[0_0_auto] sm:w-[66.66666667%] mb-[0.5rem] text-[#dee2e6]">FE13-420261</dd>
-
-                <dt className="w-full sm:flex-[0_0_auto] sm:w-[33.33333333%] font-bold text-white">Engine Number:</dt>
-                <dd className="w-full sm:flex-[0_0_auto] sm:w-[66.66666667%] mb-[0.5rem] text-[#dee2e6]">6AA-FE13</dd>
-
-                <dt className="w-full sm:flex-[0_0_auto] sm:w-[33.33333333%] font-bold text-white">Issue Date:</dt>
-                <dd className="w-full sm:flex-[0_0_auto] sm:w-[66.66666667%] mb-[0.5rem] text-[#dee2e6]">
-                  <span dir="rtl" className="unicode-bidi-embed font-thaana">20 ޖެނުއަރީ 2026</span>
-                </dd>
-
-                <dt className="w-full sm:flex-[0_0_auto] sm:w-[33.33333333%] font-bold text-white">Due Date:</dt>
-                <dd className="w-full sm:flex-[0_0_auto] sm:w-[66.66666667%] mb-[0.5rem] text-[#dee2e6]">
-                  <span dir="rtl" className="unicode-bidi-embed font-thaana">20 މާޗް 2026</span>
-                </dd>
-
-                <dt className="w-full sm:flex-[0_0_auto] sm:w-[33.33333333%] font-bold text-white flex items-center">Status:</dt>
-                <dd className="w-full sm:flex-[0_0_auto] sm:w-[66.66666667%] mb-[0.5rem] text-[#dee2e6] flex items-center">
-                  <span className="inline-block py-[0.35em] px-[0.65em] text-[0.75em] font-bold leading-none text-center whitespace-nowrap align-baseline rounded-[0.375rem] bg-[#198754] text-white">Valid</span>
-                </dd>
-              </dl>
             </div>
-          </div>
+          ) : (
+            <div className="bg-[#212529] rounded-[0.375rem] border border-[rgba(255,255,255,0.125)] flex flex-col min-w-0 break-words bg-clip-border shadow-[0_1rem_3rem_rgba(0,0,0,0.175)] mt-[1rem] mb-[1rem]">
+              <div className={`py-[0.5rem] px-[1rem] mb-0 ${permit.status === 'Valid' ? 'bg-[#198754]' : 'bg-[#dc3545]'} border-b border-[rgba(255,255,255,0.125)] text-white rounded-t-[calc(0.375rem-1px)]`}>
+                <h2 className="text-[1.25rem] font-medium leading-[1.2] mb-0">Verification Results</h2>
+              </div>
+              
+              <div className="flex-auto p-[1.5rem]">
+                <div className={`relative p-[1rem] mb-[1rem] border border-solid rounded-[0.375rem] flex items-center ${permit.status === 'Valid' ? 'border-[#0f5132] bg-[#051b11] text-[#75b798]' : 'border-[#842029] bg-[#2c0b0e] text-[#ea868f]'}`} role="alert">
+                  {permit.status === 'Valid' ? (
+                    <svg className="w-[1.5rem] h-[1.5rem] fill-current flex-shrink-0 mr-[0.5rem]" viewBox="0 0 16 16">
+                      <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-[1.5rem] h-[1.5rem] fill-current flex-shrink-0 mr-[0.5rem]" viewBox="0 0 16 16">
+                      <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z" />
+                    </svg>
+                  )}
+                  <div>
+                    <strong className="font-bold text-white">
+                      {permit.status === 'Valid' ? 'Document Verified!' : 'Document Invalid!'}
+                    </strong> 
+                    {permit.status === 'Valid' ? ' This document is authentic and valid.' : ` This document is marked as ${permit.status}.`}
+                  </div>
+                </div>
 
+                <h3 className="text-[1rem] font-medium leading-[1.2] mt-[1.5rem] mb-[1rem] text-white">Document Details:</h3>
+                
+                <dl className="flex flex-wrap mt-0 mb-[1rem]">
+                  <dt className="w-full sm:flex-[0_0_auto] sm:w-[33.33333333%] font-bold text-white">Permit Number:</dt>
+                  <dd className="w-full sm:flex-[0_0_auto] sm:w-[66.66666667%] mb-[0.5rem] text-[#dee2e6]">{permit.permit_number}</dd>
+
+                  <dt className="w-full sm:flex-[0_0_auto] sm:w-[33.33333333%] font-bold text-white">Owner Name:</dt>
+                  <dd className="w-full sm:flex-[0_0_auto] sm:w-[66.66666667%] mb-[0.5rem] text-[#dee2e6]">{permit.owner_name}</dd>
+
+                  <dt className="w-full sm:flex-[0_0_auto] sm:w-[33.33333333%] font-bold text-white">Chassis Number:</dt>
+                  <dd className="w-full sm:flex-[0_0_auto] sm:w-[66.66666667%] mb-[0.5rem] text-[#dee2e6]">{permit.chassis_number}</dd>
+
+                  <dt className="w-full sm:flex-[0_0_auto] sm:w-[33.33333333%] font-bold text-white">Engine Number:</dt>
+                  <dd className="w-full sm:flex-[0_0_auto] sm:w-[66.66666667%] mb-[0.5rem] text-[#dee2e6]">{permit.engine_number}</dd>
+
+                  <dt className="w-full sm:flex-[0_0_auto] sm:w-[33.33333333%] font-bold text-white">Issue Date:</dt>
+                  <dd className="w-full sm:flex-[0_0_auto] sm:w-[66.66666667%] mb-[0.5rem] text-[#dee2e6]">
+                    <span dir="rtl" className="unicode-bidi-embed font-thaana">{formatDhivehiDate(permit.issue_date)}</span>
+                  </dd>
+
+                  <dt className="w-full sm:flex-[0_0_auto] sm:w-[33.33333333%] font-bold text-white">Due Date:</dt>
+                  <dd className="w-full sm:flex-[0_0_auto] sm:w-[66.66666667%] mb-[0.5rem] text-[#dee2e6]">
+                    <span dir="rtl" className="unicode-bidi-embed font-thaana">{formatDhivehiDate(permit.due_date)}</span>
+                  </dd>
+
+                  <dt className="w-full sm:flex-[0_0_auto] sm:w-[33.33333333%] font-bold text-white flex items-center">Status:</dt>
+                  <dd className="w-full sm:flex-[0_0_auto] sm:w-[66.66666667%] mb-[0.5rem] text-[#dee2e6] flex items-center">
+                    <span className={`inline-block py-[0.35em] px-[0.65em] text-[0.75em] font-bold leading-none text-center whitespace-nowrap align-baseline rounded-[0.375rem] text-white ${permit.status === 'Valid' ? 'bg-[#198754]' : 'bg-[#dc3545]'}`}>
+                      {permit.status}
+                    </span>
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          )}
         </main>
 
-        {/* Footer - "mt-auto text-center text-white-50" */}
+        {/* Footer */}
         <footer className="mt-auto text-center text-[rgba(255,255,255,0.5)] pb-[1rem]">
           <p className="mt-0 mb-[1rem]">
             © Ministry of Transport & Civil Aviation <br />
@@ -113,5 +195,18 @@ export default function VerificationPortal() {
 
       </div>
     </div>
+  );
+}
+
+// Next.js requires components using useSearchParams to be wrapped in a Suspense boundary
+export default function VerificationPortal() {
+  return (
+    <Suspense fallback={
+      <div className="flex w-full min-h-screen items-center justify-center bg-[#283593]">
+        <p className="text-white">Loading Verification Portal...</p>
+      </div>
+    }>
+      <VerificationContent />
+    </Suspense>
   );
 }
