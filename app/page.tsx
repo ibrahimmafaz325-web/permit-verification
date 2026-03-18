@@ -488,48 +488,54 @@ function AdminDashboard({ session }: { session: any }) {
 
         {/* CREATE / EDIT PERMIT MODAL */}
         {isCreateModalOpen && (
-          <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-[100] p-0 sm:p-4">
-            <div className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] sm:max-h-[90vh] animate-slide-up">
-              <div className="px-5 sm:px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-10">
-                <h3 className="font-semibold text-gray-900 text-lg sm:text-base">
+          <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-[100] sm:p-4 overflow-hidden">
+            <div className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col max-h-[90vh] animate-slide-up overflow-hidden relative">
+              
+              {/* Mobile Drag Indicator */}
+              <div className="w-full flex justify-center pt-3 pb-1 sm:hidden absolute top-0 left-0">
+                <div className="w-12 h-1.5 bg-gray-300 rounded-full"></div>
+              </div>
+
+              <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-white mt-2 sm:mt-0">
+                <h3 className="font-bold text-gray-900 text-xl sm:text-lg">
                   {editingId ? 'Edit Permit' : 'New Import Permit'}
                 </h3>
-                <button onClick={() => setIsCreateModalOpen(false)} className="bg-gray-100 text-gray-500 hover:bg-gray-200 rounded-full w-8 h-8 flex items-center justify-center transition-colors">✕</button>
+                <button onClick={() => setIsCreateModalOpen(false)} className="bg-gray-100 text-gray-500 hover:bg-gray-800 hover:text-white rounded-full w-8 h-8 flex items-center justify-center transition-colors">✕</button>
               </div>
               
-              <form onSubmit={handleSavePermit} className="flex-1 overflow-y-auto flex flex-col relative">
-                <div className="p-5 sm:p-6 space-y-4 sm:space-y-5">
+              <form onSubmit={handleSavePermit} className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col">
+                <div className="p-6 space-y-5">
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Permit Number</label>
-                    <input required name="permit_number" value={formData.permit_number} onChange={handleInputChange} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 sm:py-2 text-base sm:text-sm text-gray-900 font-medium focus:outline-none focus:border-black focus:ring-1 focus:ring-black" placeholder="TA-T(L)2026/0060" />
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Permit Number</label>
+                    <input required name="permit_number" value={formData.permit_number} onChange={handleInputChange} className="w-full bg-gray-100 border border-transparent rounded-xl px-4 py-3.5 text-[16px] text-gray-900 font-medium focus:outline-none focus:bg-white focus:border-black focus:ring-1 focus:ring-black transition-colors" placeholder="TA-T(L)2026/0060" />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Owner Name</label>
-                    <input required name="owner_name" value={formData.owner_name} onChange={handleInputChange} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 sm:py-2 text-base sm:text-sm text-gray-900 font-medium focus:outline-none focus:border-black focus:ring-1 focus:ring-black" placeholder="HASSAAN KHALIDH" />
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Owner Name</label>
+                    <input required name="owner_name" value={formData.owner_name} onChange={handleInputChange} className="w-full bg-gray-100 border border-transparent rounded-xl px-4 py-3.5 text-[16px] text-gray-900 font-medium focus:outline-none focus:bg-white focus:border-black focus:ring-1 focus:ring-black transition-colors" placeholder="HASSAAN KHALIDH" />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Chassis No.</label>
-                      <input required name="chassis_number" value={formData.chassis_number} onChange={handleInputChange} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 sm:py-2 text-base sm:text-sm text-gray-900 font-medium focus:outline-none focus:border-black focus:ring-1 focus:ring-black" />
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Chassis No.</label>
+                      <input required name="chassis_number" value={formData.chassis_number} onChange={handleInputChange} className="w-full bg-gray-100 border border-transparent rounded-xl px-4 py-3.5 text-[16px] text-gray-900 font-medium focus:outline-none focus:bg-white focus:border-black focus:ring-1 focus:ring-black transition-colors" />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Engine No.</label>
-                      <input required name="engine_number" value={formData.engine_number} onChange={handleInputChange} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 sm:py-2 text-base sm:text-sm text-gray-900 font-medium focus:outline-none focus:border-black focus:ring-1 focus:ring-black" />
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Engine No.</label>
+                      <input required name="engine_number" value={formData.engine_number} onChange={handleInputChange} className="w-full bg-gray-100 border border-transparent rounded-xl px-4 py-3.5 text-[16px] text-gray-900 font-medium focus:outline-none focus:bg-white focus:border-black focus:ring-1 focus:ring-black transition-colors" />
                     </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Issue Date</label>
-                      <input type="date" required name="issue_date" value={formData.issue_date} onChange={handleInputChange} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 sm:py-2 text-base sm:text-sm text-gray-900 font-medium focus:outline-none focus:border-black focus:ring-1 focus:ring-black" />
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Issue Date</label>
+                      <input type="date" required name="issue_date" value={formData.issue_date} onChange={handleInputChange} className="w-full bg-gray-100 border border-transparent rounded-xl px-4 py-3.5 text-[16px] text-gray-900 font-medium focus:outline-none focus:bg-white focus:border-black focus:ring-1 focus:ring-black transition-colors" />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Due Date</label>
-                      <input type="date" required name="due_date" value={formData.due_date} onChange={handleInputChange} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 sm:py-2 text-base sm:text-sm text-gray-900 font-medium focus:outline-none focus:border-black focus:ring-1 focus:ring-black" />
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Due Date</label>
+                      <input type="date" required name="due_date" value={formData.due_date} onChange={handleInputChange} className="w-full bg-gray-100 border border-transparent rounded-xl px-4 py-3.5 text-[16px] text-gray-900 font-medium focus:outline-none focus:bg-white focus:border-black focus:ring-1 focus:ring-black transition-colors" />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Status</label>
-                    <select name="status" value={formData.status} onChange={handleInputChange} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 sm:py-2 text-base sm:text-sm text-gray-900 font-medium focus:outline-none focus:border-black focus:ring-1 focus:ring-black appearance-none">
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Status</label>
+                    <select name="status" value={formData.status} onChange={handleInputChange} className="w-full bg-gray-100 border border-transparent rounded-xl px-4 py-3.5 text-[16px] text-gray-900 font-medium focus:outline-none focus:bg-white focus:border-black focus:ring-1 focus:ring-black transition-colors appearance-none">
                       <option value="Valid">Valid</option>
                       <option value="Expired">Expired</option>
                       <option value="Revoked">Revoked</option>
@@ -537,8 +543,8 @@ function AdminDashboard({ session }: { session: any }) {
                   </div>
                 </div>
 
-                <div className="p-5 sm:p-6 border-t border-gray-100 bg-white sticky bottom-0 z-10">
-                  <button type="submit" disabled={isSubmitting} className="w-full bg-black hover:bg-gray-800 text-white py-3.5 sm:py-2.5 rounded-xl sm:rounded-lg font-bold sm:font-medium text-base sm:text-sm transition-colors disabled:opacity-50 shadow-md">
+                <div className="p-6 border-t border-gray-100 bg-white mt-auto">
+                  <button type="submit" disabled={isSubmitting} className="w-full bg-black hover:bg-gray-800 text-white py-4 rounded-xl font-bold text-[16px] transition-colors disabled:opacity-50 shadow-lg shadow-black/10 active:scale-[0.98]">
                     {isSubmitting ? 'Saving...' : (editingId ? 'Update Permit' : 'Save Permit')}
                   </button>
                 </div>
@@ -549,24 +555,30 @@ function AdminDashboard({ session }: { session: any }) {
 
         {/* MANAGE ADMINS MODAL */}
         {isUserModalOpen && (
-          <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-[100] p-0 sm:p-4">
-            <div className="bg-white w-full sm:max-w-2xl rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] sm:max-h-[90vh] animate-slide-up">
-              <div className="px-5 sm:px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-10">
+          <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-[100] sm:p-4 overflow-hidden">
+            <div className="bg-white w-full sm:max-w-2xl rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col max-h-[90vh] animate-slide-up overflow-hidden relative">
+              
+              {/* Mobile Drag Indicator */}
+              <div className="w-full flex justify-center pt-3 pb-1 sm:hidden absolute top-0 left-0">
+                <div className="w-12 h-1.5 bg-gray-300 rounded-full"></div>
+              </div>
+
+              <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-white mt-2 sm:mt-0">
                 <div>
-                  <h3 className="font-semibold text-gray-900 text-lg sm:text-base">Manage Admins</h3>
+                  <h3 className="font-bold text-gray-900 text-xl sm:text-lg">Manage Admins</h3>
                   <p className="text-xs text-gray-500 mt-0.5 hidden sm:block">Add, edit, or remove access to the system.</p>
                 </div>
-                <button onClick={() => setIsUserModalOpen(false)} className="bg-gray-100 text-gray-500 hover:bg-gray-200 rounded-full w-8 h-8 flex items-center justify-center transition-colors">✕</button>
+                <button onClick={() => setIsUserModalOpen(false)} className="bg-gray-100 text-gray-500 hover:bg-gray-800 hover:text-white rounded-full w-8 h-8 flex items-center justify-center transition-colors">✕</button>
               </div>
               
-              <div className="flex-1 overflow-y-auto p-5 sm:p-6">
+              <div className="flex-1 overflow-y-auto overflow-x-hidden p-6">
                 {/* Add New Admin Form */}
-                <form onSubmit={handleCreateAdmin} className="bg-gray-50 p-4 sm:p-5 rounded-2xl border border-gray-200 mb-6">
+                <form onSubmit={handleCreateAdmin} className="bg-gray-50 p-5 rounded-2xl border border-gray-200 mb-6">
                   <h4 className="text-xs font-bold text-gray-600 uppercase tracking-wider mb-3">Add New Admin</h4>
                   <div className="flex flex-col sm:flex-row gap-3">
-                    <input required type="email" value={newUserEmail} onChange={(e) => setNewUserEmail(e.target.value)} className="w-full sm:flex-1 bg-white border border-gray-300 rounded-xl px-4 py-3 sm:py-2 text-base sm:text-sm text-gray-900 focus:outline-none focus:border-black focus:ring-1 focus:ring-black" placeholder="staff@transport.gov.mv" />
-                    <input required type="password" value={newUserPassword} onChange={(e) => setNewUserPassword(e.target.value)} className="w-full sm:flex-1 bg-white border border-gray-300 rounded-xl px-4 py-3 sm:py-2 text-base sm:text-sm text-gray-900 focus:outline-none focus:border-black focus:ring-1 focus:ring-black" placeholder="Temp Password (min 6)" minLength={6} />
-                    <button type="submit" disabled={isSubmitting} className="w-full sm:w-auto bg-black hover:bg-gray-800 text-white px-6 py-3 sm:py-2 rounded-xl font-bold sm:font-medium text-base sm:text-sm transition-colors disabled:opacity-50">
+                    <input required type="email" value={newUserEmail} onChange={(e) => setNewUserEmail(e.target.value)} className="w-full sm:flex-1 bg-white border border-gray-300 rounded-xl px-4 py-3.5 text-[16px] sm:text-sm text-gray-900 focus:outline-none focus:border-black focus:ring-1 focus:ring-black" placeholder="staff@transport.gov.mv" />
+                    <input required type="password" value={newUserPassword} onChange={(e) => setNewUserPassword(e.target.value)} className="w-full sm:flex-1 bg-white border border-gray-300 rounded-xl px-4 py-3.5 text-[16px] sm:text-sm text-gray-900 focus:outline-none focus:border-black focus:ring-1 focus:ring-black" placeholder="Temp Password (min 6)" minLength={6} />
+                    <button type="submit" disabled={isSubmitting} className="w-full sm:w-auto bg-black hover:bg-gray-800 text-white px-6 py-3.5 sm:py-2 rounded-xl font-bold sm:font-medium text-[16px] sm:text-sm transition-colors disabled:opacity-50">
                       {isSubmitting ? 'Adding...' : 'Add'}
                     </button>
                   </div>
@@ -584,7 +596,7 @@ function AdminDashboard({ session }: { session: any }) {
                         return (
                           <div key={admin.id} className="p-4 hover:bg-gray-50 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             <div>
-                              <div className="font-medium text-gray-900 flex items-center gap-2 text-base sm:text-sm">
+                              <div className="font-bold text-gray-900 flex items-center gap-2 text-[16px] sm:text-sm">
                                 {admin.email}
                                 {isCurrentUser && <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">You</span>}
                               </div>
@@ -593,9 +605,9 @@ function AdminDashboard({ session }: { session: any }) {
                             
                             <div className="flex items-center gap-3">
                               <span className="text-xs text-gray-500 hidden sm:block mr-2">{admin.created_at}</span>
-                              <button onClick={() => handleChangePassword(admin.id)} className="flex-1 sm:flex-none bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 sm:py-1.5 px-3 rounded-lg text-sm sm:text-xs font-medium transition-colors text-center">Edit Password</button>
+                              <button onClick={() => handleChangePassword(admin.id)} className="flex-1 sm:flex-none bg-gray-100 hover:bg-gray-200 text-gray-800 py-3 sm:py-1.5 px-3 rounded-xl sm:rounded-lg text-[14px] sm:text-xs font-bold sm:font-medium transition-colors text-center">Edit Password</button>
                               {!isCurrentUser && (
-                                <button onClick={() => handleDeleteAdmin(admin.id)} className="flex-1 sm:flex-none bg-red-50 hover:bg-red-100 text-red-600 py-2 sm:py-1.5 px-3 rounded-lg text-sm sm:text-xs font-medium transition-colors text-center">Delete</button>
+                                <button onClick={() => handleDeleteAdmin(admin.id)} className="flex-1 sm:flex-none bg-red-50 hover:bg-red-100 text-red-600 py-3 sm:py-1.5 px-3 rounded-xl sm:rounded-lg text-[14px] sm:text-xs font-bold sm:font-medium transition-colors text-center">Delete</button>
                               )}
                             </div>
                           </div>
